@@ -60,20 +60,20 @@
     <ion-content class="ion-padding">
       <img [src]="scannedImageBase64" alt="Imagem digitalizada" class="img-result" />
       <ion-fab slot="fixed" vertical="bottom" horizontal="start">
-        <ion-fab-button>
+        <ion-fab-button color="danger">
           <ion-icon name="thumbs-down"></ion-icon>
         </ion-fab-button>
         <ion-fab-list side="top">
-          <ion-fab-button (click)="dismiss()">
+          <ion-fab-button (click)="dismiss()" data-desc="Descartar">
             <ion-icon name="trash"></ion-icon>
           </ion-fab-button>
-          <ion-fab-button (click)="retry()">
+          <ion-fab-button (click)="retry()" data-desc="Repetir">
             <ion-icon name="arrow-undo"></ion-icon>
           </ion-fab-button>
         </ion-fab-list>
       </ion-fab>
       <ion-fab slot="fixed" vertical="bottom" horizontal="end">
-        <ion-fab-button (click)="confirm()">
+        <ion-fab-button (click)="confirm()" color="success">
           <ion-icon name="thumbs-up"></ion-icon>
         </ion-fab-button>
       </ion-fab>
