@@ -80,7 +80,7 @@ export default class JScanify {
 
     // desenha o retangulo de referencia
     if (options.showRefRect) {
-      ctx.lineWidth = 3;
+      ctx.lineWidth = window.devicePixelRatio * 3;
       ctx.strokeStyle = "blue";
       ctx.rect(options.padding, options.padding, image.width - options.padding * 2, image.height - options.padding * 2);
       ctx.stroke();
@@ -101,7 +101,7 @@ export default class JScanify {
         if (tl.x > 0 && tl.y > 0) {
 
           ctx.strokeStyle = isBetterFraming ? "green" : "red";
-          ctx.lineWidth = 10;
+          ctx.lineWidth = window.devicePixelRatio * 10;
 
           // desenha o contorno
           ctx.beginPath();
