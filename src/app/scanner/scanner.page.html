@@ -1,0 +1,102 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar mode="md">
+    <ion-title>Scanner</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [forceOverscroll]="false">
+  <div *ngIf="showPanel === 'INIT'" class="container-scanner">
+    <ng-container>
+      <h2>Precisamos digitalizar seu documento.</h2>
+      <p class="ion-text-center">
+        Para esse processo vamos utilizar a câmera do seu dispositivo
+      </p>
+    </ng-container>
+  </div>
+  <div *ngIf="showPanel === 'SUCCESS'" class="container-scanner">
+    <h2 class="success mr-200 ml-200">
+      Documento digitalizado com sucesso!
+    </h2>
+    <p class="ion-text-center mb-200">
+      Clique no botão abaixo para finalizar o processo
+    </p>
+  </div>
+  <div *ngIf="showPanel === 'FAIL'" class="container-scanner">
+    <h2 class="fail mr-150 mb-250 ml-150">
+      Não conseguimos digitalizar seu documento.
+    </h2>
+  </div>
+</ion-content>
+<ion-footer class="ion-no-border">
+  <ion-toolbar>
+    <ion-button *ngIf="showPanel === 'INIT'" mode="ios" expand="full" color="primary" [disabled]="isLoading"
+      (click)="goToScanner()">
+      {{ isLoading ? "" : "Continuar" }}
+      <ion-icon *ngIf="!isLoading" slot="end" name="chevron-forward"></ion-icon>
+      <span *ngIf="isLoading" class="btn-loader"></span>
+    </ion-button>
+    <ion-button *ngIf="showPanel === 'SUCCESS'" mode="ios" expand="full" color="success" [disabled]="isLoading"
+      (click)="goToNextStep()">
+      {{ isLoading ? "" : "Avançar" }}
+      <ion-icon slot="end" name="chevron-forward"></ion-icon>
+      <span *ngIf="isLoading" class="btn-loader"></span>
+    </ion-button>
+    <ion-button *ngIf="showPanel === 'FAIL'" mode="ios" expand="full" color="danger" [disabled]="isLoading"
+      (click)="goToScanner()">
+      {{ isLoading ? "" : "Tentar novamente" }}
+      <ion-icon slot="end" name="refresh"></ion-icon>
+      <span *ngIf="isLoading" class="btn-loader"></span>
+    </ion-button>
+  </ion-toolbar>
+</ion-footer>
+
+<ion-modal [isOpen]="openModalResult" (willDismiss)="onModalResultClosed()" (willPresent)="onModalResultOpened()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Documento digitalizado</ion-title>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <img [src]="scannedImageBase64" alt="Imagem digitalizada" class="img-result" />
+      <ion-fab slot="fixed" vertical="bottom" horizontal="start">
+        <ion-fab-button>
+          <ion-icon name="thumbs-down"></ion-icon>
+        </ion-fab-button>
+        <ion-fab-list side="top">
+          <ion-fab-button (click)="dismiss()">
+            <ion-icon name="trash"></ion-icon>
+          </ion-fab-button>
+          <ion-fab-button (click)="retry()">
+            <ion-icon name="arrow-undo"></ion-icon>
+          </ion-fab-button>
+        </ion-fab-list>
+      </ion-fab>
+      <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+        <ion-fab-button (click)="confirm()">
+          <ion-icon name="thumbs-up"></ion-icon>
+        </ion-fab-button>
+      </ion-fab>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<ion-modal [isOpen]="openModalScanner" (willDismiss)="onModalScannerClosed()" (willPresent)="onModalScannerOpened()"
+  #scanner>
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Digitalizando</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="scanner.dismiss()">Cancelar</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content id="content" [forceOverscroll]="false">
+      <canvas id="frame" class="canvas"></canvas>
+      <canvas id="canvas" class="canvas-hidden"></canvas>
+      <canvas id="crop" [hidden]="true"></canvas>
+      <video id="video" [hidden]="true"></video>
+    </ion-content>
+  </ng-template>
+</ion-modal>

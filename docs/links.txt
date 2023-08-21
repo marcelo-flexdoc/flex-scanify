@@ -1,0 +1,28 @@
+https://github.com/theothergrantdavidson/opencv-ts/
+https://github.com/ColonelParrot/jscanify
+
+https://mediapipe-studio.webapps.google.com/home
+https://learnopencv.com/automatic-document-scanner-using-opencv/
+https://machinelearningprojects.net/document-scanner-using-opencv/
+https://dontrepeatyourself.org/post/learn-opencv-by-building-a-document-scanner/
+https://rubikscode.net/2022/08/01/document-scanner-with-opencv-using-video-footage/
+
+
+https://www.youtube.com/watch?v=W3DzSm8WI1g&ab_channel=GiovanniCode
+https://www.youtube.com/watch?v=ON_JubFRw8M&ab_channel=Murtaza%27sWorkshop-RoboticsandAI
+https://www.youtube.com/watch?v=RZL4rx3agWI&ab_channel=LearnFromBasics
+https://www.youtube.com/watch?v=wZzz9xS5J4k&ab_channel=edureka%21
+https://www.youtube.com/watch?v=pG4sUNDOZFg&ab_channel=NicholasRenotte
+
+//com ajuste de cantos
+https://github.com/andrewdcampbell/OpenCV-Document-Scanner
+
+// salvando em PDF
+https://stackoverflow.com/questions/23681325/convert-canvas-to-pdf
+
+// obtend o base64 da imagem
+https://www.html5canvastutorials.com/advanced/html5-canvas-get-image-data-url/
+
+
+// playlist opencv
+https://www.youtube.com/playlist?list=PLMoSUbG1Q_r8jFS04rot-3NzidnV54Z2q

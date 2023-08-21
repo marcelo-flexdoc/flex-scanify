@@ -1,0 +1,7 @@
+{
+  "name": "Flex Scanify",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
