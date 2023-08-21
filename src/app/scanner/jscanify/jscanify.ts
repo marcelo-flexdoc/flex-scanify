@@ -64,59 +64,65 @@ export default class JScanify {
   highlightPaper(image: HTMLCanvasElement, options?: IOptions) {
 
     options = options ?? {};
-    options.color = options.color ?? "orange";
-    options.thickness = options.thickness ?? 8;
+    options.showRefRect = options.showRefRect ?? false;
     options.detectedCrop = options.detectedCrop ?? (() => { });
+    options.padding = Math.round(options.padding ?? 30);
+
+    //console.debug('OPTIONS', options)
 
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d")!;
+
     const img = cv.imread(image);
     const maxContour = this.findPaperContour(img);
 
     cv.imshow(canvas, img);
 
     // desenha o retangulo de referencia
-    const PADD = 30
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = "blue";
-    ctx.rect(PADD, PADD, image.clientWidth - PADD * 2, image.clientHeight - PADD * 2);
-    ctx.stroke();
+    if (options.showRefRect) {
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "blue";
+      ctx.rect(options.padding, options.padding, image.width - options.padding * 2, image.height - options.padding * 2);
+      ctx.stroke();
+    }
 
     if (maxContour) {
 
       const rect = this.getCornerPoints(maxContour);
-      const { topL, topR, botL, botR } = rect;
+      const { tl, tr, bl, br } = rect;
 
-      if (topL && topR && botL && botR) {
+      if (tl && tr && bl && br) {
 
         // verifica se o retangulo de referencia contem o retangulo de teste
-        const rectRef = new cv.Rect(PADD, PADD, image.clientWidth - PADD * 2, image.clientHeight - PADD * 2);
+        const rectRef = new cv.Rect(options.padding, options.padding, image.width - options.padding * 2, image.height - options.padding * 2);
         const isBetterFraming = this.detectBetterFraming(rectRef, rect);
 
         // somente desenha contorno se já estiver descolado da borda externa
-        if (topL.x > 0 && topL.y > 0) {
+        if (tl.x > 0 && tl.y > 0) {
 
-          ctx.strokeStyle = isBetterFraming ? "green" : options.color;
-          ctx.lineWidth = options.thickness!;
+          ctx.strokeStyle = isBetterFraming ? "green" : "red";
+          ctx.lineWidth = 10;
 
+          // desenha o contorno
           ctx.beginPath();
-          ctx.moveTo(topL.x, topL.y);
-          ctx.lineTo(topR.x, topR.y);
-          ctx.lineTo(botR.x, botR.y);
-          ctx.lineTo(botL.x, botL.y);
-          ctx.lineTo(topL.x, topL.y);
+          ctx.moveTo(tl.x, tl.y);
+          ctx.lineTo(tr.x, tr.y);
+          ctx.lineTo(br.x, br.y);
+          ctx.lineTo(bl.x, bl.y);
+          ctx.lineTo(tl.x, tl.y);
           ctx.stroke();
         }
 
-        // if (detected) {
-        //   const extracted = this.extractPaper(image, image.width, image.height);
-        //   options.detectedCrop(extracted);
-        // }
+        // se detectou melhor enquadramento, extrai o documento
+        if (isBetterFraming) {
+          const extracted = this.extractPaper(image, image.width, image.height, rect);
+          options.detectedCrop(extracted);
+        }
       }
     }
 
     img.delete();
-    maxContour.delete(); // TODO: check if these need to be deleted
+    maxContour.delete();
 
     return canvas;
   }
@@ -129,15 +135,15 @@ export default class JScanify {
    * @param {*} cornerPoints optional custom corner points, in case automatic corner points are incorrect
    * @returns `HTMLCanvasElement` containing undistorted image
    */
-  extractPaper(image: any, resultWidth: number, resultHeight: number, cornerPoints?: any) {
+  extractPaper(image: any, resultWidth: number, resultHeight: number, cornerPoints?: IRect) {
 
     const img = cv.imread(image);
     const maxContour = this.findPaperContour(img);
-    const { topL, topR, botL, botR } = cornerPoints || this.getCornerPoints(maxContour);
+    const { tl, tr, bl, br } = cornerPoints || this.getCornerPoints(maxContour);
 
     let warpedDst = new cv.Mat();
     let dsize = new cv.Size(resultWidth, resultHeight);
-    let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [topL.x, topL.y, topR.x, topR.y, botL.x, botL.y, botR.x, botR.y]);
+    let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [tl.x - 5, tl.y - 5, tr.x + 5, tr.y - 5, bl.x - 5, bl.y + 5, br.x + 5, br.y + 5]);
     let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, resultWidth, 0, 0, resultHeight, resultWidth, resultHeight]);
 
     let M = cv.getPerspectiveTransform(srcTri, dstTri);
@@ -148,19 +154,18 @@ export default class JScanify {
 
     img.delete()
     warpedDst.delete()
-    srcTri.delete() // TODO: check if these need to be deleted
-    dstTri.delete() // TODO: check if these need to be deleted
+    srcTri.delete()
+    dstTri.delete()
 
     return canvas;
   }
 
   // verifica se o retangulo de referencia contem o retangulo de teste
   detectBetterFraming(rectRef: Rect, rectTest: IRect): boolean {
-    return !((rectTest.topL.x == 0 && rectTest.topL.y == 0) ||
-      rectRef.contains(rectTest.topL) || rectRef.contains(rectTest.topR) ||
-      rectRef.contains(rectTest.botL) || rectRef.contains(rectTest.botR))
+    return !(rectTest.tl.x == 0 || rectTest.tl.y == 0 || rectTest.bl.x == 0 || rectTest.tr.y == 0 ||
+      rectRef.contains(rectTest.tl) || rectRef.contains(rectTest.tr) ||
+      rectRef.contains(rectTest.bl) || rectRef.contains(rectTest.br))
   }
-
 
   /**
    * Calculates the corner points of a contour.
@@ -170,10 +175,10 @@ export default class JScanify {
   getCornerPoints(contour: Mat): IRect {
 
     const rect: IRect = {} as IRect;
-    let topLDist = 0;
-    let topRDist = 0;
-    let botLDist = 0;
-    let botRDist = 0;
+    let tlDist = 0;
+    let trDist = 0;
+    let blDist = 0;
+    let brDist = 0;
 
     let areaRect = cv.minAreaRect(contour);
     const center = areaRect.center;
@@ -185,27 +190,27 @@ export default class JScanify {
 
       if (point.x < center.x && point.y < center.y) {
         // top left
-        if (dist > topLDist) {
-          rect.topL = point;
-          topLDist = dist;
+        if (dist > tlDist) {
+          rect.tl = point;
+          tlDist = dist;
         }
       } else if (point.x > center.x && point.y < center.y) {
         // top right
-        if (dist > topRDist) {
-          rect.topR = point;
-          topRDist = dist;
+        if (dist > trDist) {
+          rect.tr = point;
+          trDist = dist;
         }
       } else if (point.x < center.x && point.y > center.y) {
         // bottom left
-        if (dist > botLDist) {
-          rect.botL = point;
-          botLDist = dist;
+        if (dist > blDist) {
+          rect.bl = point;
+          blDist = dist;
         }
       } else if (point.x > center.x && point.y > center.y) {
         // bottom right
-        if (dist > botRDist) {
-          rect.botR = point;
-          botRDist = dist;
+        if (dist > brDist) {
+          rect.br = point;
+          brDist = dist;
         }
       }
     }
@@ -214,16 +219,26 @@ export default class JScanify {
 }
 
 interface IRect {
-  topL: Point;
-  topR: Point;
-  botL: Point;
-  botR: Point;
+  tl: Point; // top left
+  tr: Point; // top right
+  bl: Point; // bottom left
+  br: Point; // bottom right
 }
 
 export interface IOptions {
-  color?: string;
-  thickness?: number;
-  detectedCrop?: (canvas?: HTMLCanvasElement) => void;
+  /**
+   * true to show the reference rectangle
+   */
+  showRefRect?: boolean;
+  /**
+   * space between the detected paper and the frame
+   */
+  padding?: number;
+  /**
+   * callback function called when paper is detected
+   * @param canvas canvas element containing the detected paper
+   */
+  detectedCrop?: (canvas: HTMLCanvasElement) => void;
 }
 
 // implementa metodo contains para Rect
