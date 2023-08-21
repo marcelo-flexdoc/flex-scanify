@@ -51,11 +51,14 @@ export class ScannerPage implements OnInit {
     this.loadingCtl.present();
   }
 
-  startVideoScanner() {
-    console.debug('STARTING SCAN');
+  async startVideoScanner() {
 
-    const content = document.getElementById('content') as HTMLDivElement;
+    console.debug('STARTING SCAN');
+    await this.presentLoading()
+
+    // busca os elementos da tela
     this.video = document.getElementById('video') as HTMLVideoElement;
+    const content = document.getElementById('content') as HTMLDivElement;
     const canvas = document.getElementById('canvas') as HTMLCanvasElement;
     const frame = document.getElementById('frame') as HTMLCanvasElement;
     const crop = document.getElementById('crop') as HTMLCanvasElement;
@@ -63,15 +66,8 @@ export class ScannerPage implements OnInit {
     const frameCtx = frame.getContext("2d");
     const cropCtx = crop.getContext("2d");
 
-    this.presentLoading()
-
-    const scanner = new JScanify();
-
-    navigator.mediaDevices.getUserMedia({
-      video: {
-        width: { min: 1280, ideal: 1920, max: 2560 }, height: { min: 720, ideal: 1080, max: 1440 }, facingMode: "environment"
-      }
-    }).then((stream) => {
+    // inicia configurações de video e canvas
+    const videScanning = (stream: MediaStream) => {
 
       console.log('VIDEO STARTING', stream.getVideoTracks()); //[0].getSettings()
 
@@ -83,7 +79,6 @@ export class ScannerPage implements OnInit {
         console.log('VIEW PORT', content.clientWidth, content.clientHeight);
 
         const isPortrait = content.clientWidth < content.clientHeight;
-        //const [wRatio, hRatio] = isPortrait ? [content.clientWidth / this.video.videoWidth, content.clientHeight / this.video.videoHeight] : [content.clientHeight / this.video.videoWidth, content.clientWidth / this.video.videoHeight];
         const [innerWidth, innerHeight] = isPortrait ? [content.clientWidth, content.clientWidth * (this.video.videoHeight / this.video.videoWidth)] : [content.clientHeight * (this.video.videoWidth / this.video.videoHeight), content.clientHeight];
 
         frame.width = this.video.videoWidth;
@@ -114,17 +109,29 @@ export class ScannerPage implements OnInit {
           setTimeout(() => this.activateModalResult(), 1000);
         }
 
+        // inicia o scanner
+        const scanner = new JScanify();
+        // configurações do scanner
+        const options = { detectedCrop: detected, showRefRect: true, padding: canvas.width * 0.15 };
+
+        // captura frames
         interval = setInterval(() => {
           // captura frames
-          canvasCtx?.drawImage(this.video, 0, 0, this.video.videoWidth, this.video.videoHeight)// , 0, 0, innerWidth, innerHeight);
+          canvasCtx?.drawImage(this.video, 0, 0, this.video.videoWidth, this.video.videoHeight);
           // destaca o documento
-          const highlight = scanner.highlightPaper(canvas, { detectedCrop: detected, showRefRect: true, padding: canvas.width * 0.1 });
-          frameCtx?.drawImage(highlight, 0, 0, highlight.width, highlight.height) //, 0, 0, innerWidth, innerHeight);
+          const highlight = scanner.highlightPaper(canvas, options);
+          frameCtx?.drawImage(highlight, 0, 0, highlight.width, highlight.height);
         }, 100);
 
         this.loadingCtl.dismiss();
       };
-    });
+    };
+
+    navigator.mediaDevices.getUserMedia({
+      video: {
+        width: { min: 1280, ideal: 1920, max: 2560 }, height: { min: 720, ideal: 1080, max: 1440 }, facingMode: "environment"
+      }
+    }).then(videScanning);
 
   }
 
