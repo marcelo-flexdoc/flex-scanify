@@ -4,6 +4,7 @@ import { ActionSheetController, LoadingController } from '@ionic/angular';
 import { IDocument } from '../result/result.page';
 import JScanify from './jscanify/jscanify';
 import { OpencvService } from './services/opencv.service';
+import { ToastService } from './services/toast.service';
 
 @Component({
   selector: 'app-scanner',
@@ -25,7 +26,8 @@ export class ScannerPage implements OnInit {
     private route: Router,
     private opencvService: OpencvService,
     private loadingController: LoadingController,
-    private actionSheetCtrl: ActionSheetController
+    private actionSheetCtrl: ActionSheetController,
+    private toastService: ToastService
   ) { }
 
   ngOnInit() {
@@ -127,12 +129,10 @@ export class ScannerPage implements OnInit {
       };
     };
 
-    navigator.mediaDevices.getUserMedia({
-      video: {
-        width: { min: 1280, ideal: 1920, max: 2560 }, height: { min: 720, ideal: 1080, max: 1440 }, facingMode: "environment"
-      }
-    }).then(videScanning);
-
+    window.navigator.mediaDevices.getUserMedia({
+      video: { width: { min: 1280, ideal: 1920, max: 2560 }, height: { min: 720, ideal: 1080, max: 1440 }, facingMode: "environment" }
+    }).then(videScanning)
+      .catch((err) => this.toastService.toastWarning("Permissão de acesso à câmera negada!"));
   }
 
   goToScanner() {
